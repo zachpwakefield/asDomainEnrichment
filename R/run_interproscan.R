@@ -1,3 +1,4 @@
 run_interproscan <- function() {
-  system("bash ../run_interproscan.sh")
+  paste("bash ", system.file(package="domainEnrichment"),"/run_interproscan.sh",sep="")
 }
+
