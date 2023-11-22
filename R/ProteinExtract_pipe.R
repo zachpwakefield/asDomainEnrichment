@@ -1,4 +1,4 @@
-proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE") {
+proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE", location = system.file(package="domainEnrichment")) {
 
   if (background == T) {
     files <- paste(files_dir, list.files(files_dir)[grep('[.]exon', list.files(files_dir))], sep = "")
@@ -15,7 +15,7 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
   } else {
     df <- read.delim(files_dir, sep = " ")
     df.l <- lfc(df, numCont = nC, numExp = nE, exon_type = exon_type, cores = inCores)
-    lfcPlot <- make_lfcPlot(df.l)
+    lfcPlot <- make_lfcPlot(df.l, location = location)
 
     redExon <- data.frame(geneR = unlist(lapply(strsplit(df.l$gene, split = "[.]"), "[[", 1)),
                           chr = sapply(strsplit(df.l$exon, split = ":"), "[[", 1),
