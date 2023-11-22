@@ -1,7 +1,7 @@
-c_trans <- function() {
-  return(read_lines(paste(system.file(package="domainEnrichment"),"/f_protein_code_from_gencodev43.txt",sep="")))
+c_trans <- function(location) {
+  return(read_lines(paste(location,"/f_protein_code_from_gencodev43.txt",sep="")))
 }
 
-gtf <- function() {
-  return(read.csv(paste(system.file(package="domainEnrichment"),"/gtf_withInfo.csv",sep=""), header = T)[,-c(1)])
+gtf <- function(location) {
+  return(read.csv(paste(location,"/gtf_withInfo.csv",sep=""), header = T)[,-c(1)])
 }
