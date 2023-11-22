@@ -49,7 +49,7 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
     } else {"none"}
   }))
 
-  proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1])[1])), prot = protCode) %>% separate(id, c("transcript", "id"), "#") %>% separate("id", c("gene", "chr"), ";") %>% separate('chr', c('chr', 'coords'), ':') %>% separate('coords', c('start', 'stop'), '-')
+  proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1])[1])), prot = protCode) %>% tidyr::separate(id, c("transcript", "id"), "#") %>% tidyr::separate("id", c("gene", "chr"), ";") %>% tidyr::separate('chr', c('chr', 'coords'), ':') %>% tidyr::separate('coords', c('start', 'stop'), '-')
 
   proFast <- c()
   if (length(proBed[,1]) %% 2 == 0) {
@@ -95,16 +95,16 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
         pMatch <- c(pMatch, 0)
       } else if (protCode[i] == protCode[i+1]) {
         protC <- c(protC, "Same", "Same")
-        protAlign[[i]] <- msa(Biostrings::AAStringSet(c(protCode[i], protCode[i+1])))
+        protAlign[[i]] <- msa::msa(Biostrings::AAStringSet(c(protCode[i], protCode[i+1])))
         pMatch <- c(pMatch, 1.04)
         alignType <- c(alignType, "Match")
       } else {
         protC <- c(protC, "Different", "Different")
-        protAlign[[i]] <- msa(Biostrings::AAStringSet(c(protCode[i], protCode[i+1])), verbose = FALSE)
+        protAlign[[i]] <- msa::msa(Biostrings::AAStringSet(c(protCode[i], protCode[i+1])), verbose = FALSE)
 
         minPc <- min(nchar(protCode[i]), nchar(protCode[i+1]))
-        pMatch <- c(pMatch, table(unlist(lapply(strsplit(msaConsensusSequence(protAlign[[i]]), split = ""), function(x) x == "?")))[1]/min(nchar(protCode[i]), nchar(protCode[i+1])))
-        if (nchar(paste(strsplit(msaConsensusSequence(protAlign[[i]]), split = "\\?|\\.|!")[[1]][nchar(strsplit(msaConsensusSequence(protAlign[[i]]), split = "\\?|\\.|!")[[1]]) > (.1*minPc)], collapse = "")) > .2*minPc)  {
+        pMatch <- c(pMatch, table(unlist(lapply(strsplit(msa::msaConsensusSequence(protAlign[[i]]), split = ""), function(x) x == "?")))[1]/min(nchar(protCode[i]), nchar(protCode[i+1])))
+        if (nchar(paste(strsplit(msa::msaConsensusSequence(protAlign[[i]]), split = "\\?|\\.|!")[[1]][nchar(strsplit(msa::msaConsensusSequence(protAlign[[i]]), split = "\\?|\\.|!")[[1]]) > (.1*minPc)], collapse = "")) > .2*minPc)  {
           alignType <- c(alignType, "PartialMatch")
           # msaPrettyPrint(msa(Biostrings::AAStringSet(c(protCode[i], protCode[i+1])), verbose = FALSE), askForOverwrite=FALSE
           # , file = paste(out_dir, "prettyAlignments/", proBed$transcript[i], "_", proBed$transcript[i+1], "_pm_prettyAlignment.pdf", sep = ""), output = "pdf")
@@ -121,11 +121,11 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
     proBed$prop <- rep(pMatch, each = 2)
 
     # Filled Density Plot
-    (gdf <- ggplot(data.frame(dens = as.numeric(pMatch), type = alignType), aes(x = dens, fill = type)) +
-        geom_histogram(aes(y=..count../sum(after_stat(count))), colour = 1,
-                       bins = 20) + geom_density(aes(y=.0005*after_stat(count)), color = 'black', fill = "coral2", bw = .1, alpha = .3) +
-        scale_fill_manual(values=c('noPC' = "azure4", 'Match' = "#E69F00", 'onePC' = "#56B4E9", 'FrameShift' = "pink", 'PartialMatch' = "deeppink4")) +
-        theme_classic() + xlab("Alignment Score") + ylab("Fraction"))
+    (gdf <- ggplot2::ggplot(data.frame(dens = as.numeric(pMatch), type = alignType), aes(x = dens, fill = type)) +
+        ggplot2::geom_histogram(aes(y=..count../sum(after_stat(count))), colour = 1,
+                       bins = 20) + ggplot2::geom_density(aes(y=.0005*after_stat(count)), color = 'black', fill = "coral2", bw = .1, alpha = .3) +
+        ggplot2::scale_fill_manual(values=c('noPC' = "azure4", 'Match' = "#E69F00", 'onePC' = "#56B4E9", 'FrameShift' = "pink", 'PartialMatch' = "deeppink4")) +
+        ggplot2::theme_classic() + ggplot2::xlab("Alignment Score") + ggplot2::ylab("Fraction"))
 
 
     proBed$matchType <- rep(alignType, each = 2)
