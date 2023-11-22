@@ -3,7 +3,8 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
   print(paste("searching for ", ex_type, "...", sep = ""))
   rowOuts <- list()
   checks <- c()
-  rc_out <- parallel::mclapply(1:length(redExon$geneR), mc.cores = 8, function(i) {
+  # rc_out <- parallel::mclapply(1:length(redExon$geneR), mc.cores = 8, function(i) {
+  rc_out <- lapply(1:length(redExon$geneR), function(i) {
     hyb_stat <- "no" #HFE" "HLE" "no"
 
 
@@ -11,13 +12,16 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
     if ((i %% max(1, round(length(redExon[,1])/10, 0))) == 0) {
       print(paste(i, " exons or ", i/length(redExon[,1]), " completed", sep=""))
     }
-
     ## Reduce gtf for faster computation
-    gtf_min <- gtf[gtf$geneID == redExon$geneR[i] & gtf$type == "exon" &
-                     gtf$classification %in% if (ex_type == "AFE") {c("first", "single_exon")}
-                   else if (ex_type == "ALE") {c("last", "single_exon")}
-                   else if (ex_type == "SE") {c("internal")},]
 
+    if (ex_type == "AFE") {
+      lim <- c("first", "single_exon")
+    } else if (ex_type == "ALE") {
+      lim <- c("last", "single_exon")
+    } else if (ex_type == "SE") {
+      lim <- c("internal")
+    }
+    gtf_min <- gtf[gtf$geneID == redExon$geneR[i] & gtf$type == "exon" & gtf$classification %in% lim,]
 
     ## Calculate Jaccard
     inEx <- seq(redExon$start[i], redExon$stop[i])
@@ -27,20 +31,24 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
     gtf_min$length_jacc <- ins/lengths(gtfEx)
     gtf_min$jaccard <- ins/un
     gtf_min <- gtf_min %>% dplyr::arrange(desc(jaccard))
-
     ## Proceed through various checks to make sure matches are both identified and valid
 
     ## If no matches
-    if (dim(gtf_min)[1] == 0) {checks <- 1
-    rowOuts <- 0}
-
+    if (dim(gtf_min)[1] == 0) {
+      checks <- 1
+      rowOuts <- 0
+    }
     ## If all bad matches
-    else if (max(gtf_min$jaccard) < minOverlap) {checks <- 2
-    rowOuts <- 0}
+    else if (max(gtf_min$jaccard) < minOverlap) {
+      checks <- 2
+      rowOuts <- 0
+    }
 
     ## If only one match
-    else if (dim(gtf_min)[1] == 1) {checks <- 2
-    rowOuts <- gtf_min$rownum[1]}
+    else if (dim(gtf_min)[1] == 1) {
+      checks <- 2
+      rowOuts <- gtf_min$rownum[1]
+    }
 
     ## If one best match
     else if (gtf_min$jaccard[1] > gtf_min$jaccard[2]) {
@@ -65,7 +73,6 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
   checks <- unlist(lapply(rc_out, "[[", 2))
   ## Remove erroneous matches
   out_matched <- gtf[unlist(rowOuts)[unlist(rowOuts) != 0],]
-
   ## Data arrangement
   out_matched$input_id <- paste(redExon$geneR, ";", redExon$chr, ":", redExon$start, "-", redExon$stop, sep = "")[unlist(rowOuts) != 0]
   out_matched <- out_matched %>% dplyr::relocate(input_id)
