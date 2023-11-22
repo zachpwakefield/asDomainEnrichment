@@ -3,7 +3,7 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
   print(paste("searching for ", ex_type, "...", sep = ""))
   rowOuts <- list()
   checks <- c()
-  rc_out <- mclapply(1:length(redExon$geneR), mc.cores = 8, function(i) {
+  rc_out <- parallel::mclapply(1:length(redExon$geneR), mc.cores = 8, function(i) {
     hyb_stat <- "no" #HFE" "HLE" "no"
 
 
@@ -68,7 +68,7 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
 
   ## Data arrangement
   out_matched$input_id <- paste(redExon$geneR, ";", redExon$chr, ":", redExon$start, "-", redExon$stop, sep = "")[unlist(rowOuts) != 0]
-  out_matched <- out_matched %>% relocate(input_id)
+  out_matched <- out_matched %>% dplyr::relocate(input_id)
   tot_matched <- out_matched
 
   ## If looking for swaps, extract paired transcripts
