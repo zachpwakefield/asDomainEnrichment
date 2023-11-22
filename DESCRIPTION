@@ -9,4 +9,21 @@ Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
-Imports: tidyverse, methods, readr, ggpubr, xlsx, ggsignif, ComplexHeatmap, pracma, ensembldb, EnsDb.Hsapiens.v86, msa, stringr, ORFik, GenomicFeatures, data.table, Biostrings, parallel
+Imports: 
+  tidyverse, 
+  methods, 
+  readr,
+  ggpubr, 
+  xlsx, 
+  ggsignif, 
+  ComplexHeatmap, 
+  pracma, 
+  ensembldb, 
+  EnsDb.Hsapiens.v86, 
+  msa, 
+  stringr, 
+  ORFik, 
+  GenomicFeatures, 
+  data.table, 
+  Biostrings, 
+  parallel
