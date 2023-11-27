@@ -1,4 +1,4 @@
-proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE", location = system.file(package="domainEnrichment")) {
+proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE", location = system.file(package="domainEnrichment"), output_location) {
 
   if (background == T) {
     files <- paste(files_dir, list.files(files_dir)[grep('[.]exon', list.files(files_dir))], sep = "")
@@ -63,8 +63,11 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
 
   if (background == T) {
     if (saveOutput == T) {
-      write.table(proBed, paste("./", "proteinOut.txt", sep = ""), quote = F, row.names = F, col.names = F, sep = '\t')
-      write_lines(proFast, paste("./", "outFast.fa", sep = ""))
+      write_csv(proBed, paste0(output_location, "bgoutBed.csv"))
+      write_lines(proFast, paste0(output_location, "bgoutFast.fa"))
+      write_csv(matched$out_matched,  paste0(output_location, "bgmatched.csv"))
+      write_csv(bed,  paste0(output_location, "bgbed.csv"))
+
     }
     return(list(matched = matched,
                 bed = bed,
@@ -131,11 +134,17 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
     proBed$matchType <- rep(alignType, each = 2)
 
     if (saveOutput == T) {
-      write.table(proBed, paste("./", "proteinOut.txt", sep = ""), quote = F, row.names = F, col.names = F, sep = '\t')
-      write_lines(proFast, paste("./", "outFast.fa", sep = ""))
+      write_csv(proBed, paste0(output_location, "fgoutBed.csv"))
+      write_lines(proFast, paste0(output_location, "fgoutFast.fa"))
+      write_csv(matched$out_matched,  paste0(output_location, "fgmatched.csv"))
+      write_csv(bed,  paste0(output_location, "fgbed.csv"))
+      write_csv(df.l,  paste0(output_location, "fglfc.csv"))
 
-      pdf(file = paste(out_dir, "alignScores.pdf", sep = ""))
-      print(gdf)
+      pdf(file = paste0(output_location, "alignPlot.pdf"))
+      gdf
+      dev.off()
+      pdf(file = paste0(output_location, "volcano.pdf"))
+      print(deExons)
       dev.off()
     }
     return(list(matched = matched,
