@@ -52,14 +52,18 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
   proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1])[1])), prot = protCode) %>% tidyr::separate(id, c("transcript", "id"), "#") %>% tidyr::separate("id", c("gene", "chr"), ";") %>% tidyr::separate('chr', c('chr', 'coords'), ':') %>% tidyr::separate('coords', c('start', 'stop'), '-')
 
   proFast <- c()
-  if (length(proBed[,1]) %% 2 == 0) {
-    subVal <- 1
-  } else {subVal <- 0}
-  for (i in seq(1, (length(proBed[,1])-subVal), by = 2)) {
+  for (i in 1:length(proBed[,1])) {
     proFast <- c(proFast, paste(">", proBed$transcript[i], "#", proBed$gene[i], ";", proBed$chr[i], ":", proBed$start[i], "-", proBed$stop[i], ";", proBed$strand[i], sep = ""),
-                 proBed$prot[i], paste(">", proBed$transcript[i+1], "#", proBed$gene[i+1], ";", proBed$chr[i+1], ":", proBed$start[i+1], "-", proBed$stop[i+1], ";", proBed$strand[i+1], sep = ""),
-                 proBed$prot[i+1])
+                 proBed$prot[i])
   }
+  # if (length(proBed[,1]) %% 2 == 0) {
+  #   subVal <- 1
+  # } else {subVal <- 0}
+  # for (i in seq(1, (length(proBed[,1])-subVal), by = 2)) {
+  #   proFast <- c(proFast, paste(">", proBed$transcript[i], "#", proBed$gene[i], ";", proBed$chr[i], ":", proBed$start[i], "-", proBed$stop[i], ";", proBed$strand[i], sep = ""),
+  #                proBed$prot[i], paste(">", proBed$transcript[i+1], "#", proBed$gene[i+1], ";", proBed$chr[i+1], ":", proBed$start[i+1], "-", proBed$stop[i+1], ";", proBed$strand[i+1], sep = ""),
+  #                proBed$prot[i+1])
+  # }
 
   if (background == T) {
     if (saveOutput == T) {
@@ -144,7 +148,7 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
       gdf
       dev.off()
       pdf(file = paste0(output_location, "volcano.pdf"))
-      print(deExons)
+      print(lfcPlot)
       dev.off()
     }
     return(list(matched = matched,
