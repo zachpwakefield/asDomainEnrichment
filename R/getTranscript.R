@@ -3,8 +3,8 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
   print(paste("searching for ", ex_type, "...", sep = ""))
   rowOuts <- list()
   checks <- c()
-  # rc_out <- parallel::mclapply(1:length(redExon$geneR), mc.cores = 8, function(i) {
-  rc_out <- lapply(1:length(redExon$geneR), function(i) {
+  rc_out <- parallel::mclapply(1:length(redExon$geneR), mc.cores = cores, function(i) {
+  # rc_out <- lapply(1:length(redExon$geneR), function(i) {
     hyb_stat <- "no" #HFE" "HLE" "no"
 
 

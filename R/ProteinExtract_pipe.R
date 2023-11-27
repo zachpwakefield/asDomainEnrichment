@@ -145,7 +145,7 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
       write_csv(df.l,  paste0(output_location, "fglfc.csv"))
 
       pdf(file = paste0(output_location, "alignPlot.pdf"))
-      gdf
+      print(gdf)
       dev.off()
       pdf(file = paste0(output_location, "volcano.pdf"))
       print(lfcPlot)
