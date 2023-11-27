@@ -129,8 +129,8 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
 
     # Filled Density Plot
     (gdf <- ggplot2::ggplot(data.frame(dens = as.numeric(pMatch), type = alignType), ggplot2::aes(x = dens, fill = type)) +
-        ggplot2::geom_histogram(ggplot2::aes(y=after_stat(count)/sum(after_stat(count))), colour = 1,
-                       bins = 20) + ggplot2::geom_density(ggplot2::aes(y=.0005*after_stat(count)), color = 'black', fill = "coral2", bw = .1, alpha = .3) +
+        ggplot2::geom_histogram(ggplot2::aes(y=ggplot2::after_stat(count)/sum(ggplot2::after_stat(count))), colour = 1,
+                       bins = 20) + ggplot2::geom_density(ggplot2::aes(y=.0005*ggplot2::after_stat(count)), color = 'black', fill = "coral2", bw = .1, alpha = .3) +
         ggplot2::scale_fill_manual(values=c('noPC' = "azure4", 'Match' = "#E69F00", 'onePC' = "#56B4E9", 'FrameShift' = "pink", 'PartialMatch' = "deeppink4")) +
         ggplot2::theme_classic() + ggplot2::xlab("Alignment Score") + ggplot2::ylab("Fraction"))
 

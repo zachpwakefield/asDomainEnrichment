@@ -1,14 +1,14 @@
 #!/bin/bash -l
 
-#$ -P evolution
-#$ -pe omp 28
+#$ -P
+#$ -pe omp
 #$ -l h_rt=10:00:00
-#$ -N qsubtry
+#$ -N
 #$ -m ea
-#$ -M zachpwakefield@gmail.com
+#$ -M
 #$ -j y
-output_location='/projectnb2/evolution/zwakefield/proteinImpacts/mpc_cpc/'
-interproscan_location='/projectnb2/evolution/zwakefield/proteinImpacts/my_interproscan/interproscan-5.65-97.0/interproscan.sh'
+output_location=
+interproscan_location=
 
 module load java/16.0.2 gcc/8.3.0 python3/3.8.10
 
