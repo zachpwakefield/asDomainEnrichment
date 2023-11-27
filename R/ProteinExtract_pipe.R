@@ -32,7 +32,7 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
   print("exon loaded...")
 
 
-  matched <- getTranscript(gtf = gtf, redExon = redExon[1:200,], ex_type = exon_type, minOverlap = mOverlap, swaps = !(background), cores = inCores)
+  matched <- getTranscript(gtf = gtf, redExon = redExon, ex_type = exon_type, minOverlap = mOverlap, swaps = !(background), cores = inCores)
   print("exons matched, bed-ifying...")
   bed <- bedify(matched, saveBED=F, outname = outname, cores = inCores)
 
