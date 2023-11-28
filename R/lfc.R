@@ -50,5 +50,5 @@ lfc <- function(de_df, numCont, numExp, exon_type, cores = 8) {
 
   p.scDE <- de_df
   p.scDE$numOutliers <- str_count(p.scDE$outlier, "[.]")
-  return (de = p.scDE)
+  return (de = p.scDE[abs(p.scDE$lfc) > 1,])
 }
