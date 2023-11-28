@@ -16,6 +16,7 @@ proteinExtract_pipe <- function(files_dir, background = T, mOverlap = .5, saveOu
     df <- read.delim(files_dir, sep = " ")
     df.l <- lfc(df, numCont = nC, numExp = nE, exon_type = exon_type, cores = inCores)
     lfcPlot <- make_lfcPlot(df.l, location = location)
+    df.l <- df.l[abs(df.l$lfc > 1),]
 
     redExon <- data.frame(geneR = unlist(lapply(strsplit(df.l$gene, split = "[.]"), "[[", 1)),
                           chr = sapply(strsplit(df.l$exon, split = ":"), "[[", 1),
