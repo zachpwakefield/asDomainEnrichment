@@ -1,4 +1,4 @@
-proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'down')[1], lfc_thresh = 1, mOverlap = .5, saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE") {
+proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'down')[1], lfc_thresh = 1, fdr = .05, mOverlap = .5, saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE") {
 
   if (background == T) {
     files <- paste(files_dir, list.files(files_dir)[grep('[.]exon', list.files(files_dir))], sep = "")
@@ -17,9 +17,9 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     df.l <- lfc(df, numCont = nC, numExp = nE, exon_type = exon_type, cores = inCores)
     lfcPlot <- make_lfcPlot(df.l)
     if (updown == "up") {
-      cdf.l <- df.l[df.l$lfc >= lfc_thresh,]
+      cdf.l <- df.l[df.l$lfc >= lfc_thresh & df.l$p_value <= fdr,]
     } else {
-      cdf.l <- df.l[df.l$lfc <= -(lfc_thresh),]
+      cdf.l <- df.l[df.l$lfc <= -(lfc_thresh) & df.l$p_value <= fdr,]
     }
     redExon <- data.frame(geneR = unlist(lapply(strsplit(cdf.l$gene, split = "[.]"), "[[", 1)),
                           chr = sapply(strsplit(cdf.l$exon, split = ":"), "[[", 1),
