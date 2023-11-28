@@ -186,7 +186,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     return(list(matched = matched,
                 bed = all_bed,
                 proBed = all_proBed,
-                proFast = all_proFast
+                proFast = all_proFast,
                 paired_bed = bed,
                 paired_proBed = proBed,
                 paired_proFast = proFast,
