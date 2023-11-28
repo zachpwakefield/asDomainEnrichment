@@ -11,7 +11,7 @@ run_interproscan <- function(bash_location, interproscan_location, cluster = F, 
     system(paste("qsub ", bash_location, "/run_cluster_interproscan_withVars.sh", sep=""))
   } else {
     system(paste("bash ", bash_location, "/run_interproscan.sh",
-          " ", output_location,
+          " ", substr(output_location, 1, nchar(output_location)-1),
           " ", interproscan_location,
           sep=""))
   }
