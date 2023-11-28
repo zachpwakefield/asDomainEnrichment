@@ -1,6 +1,6 @@
-bedify <- function(matched = matched, saveBED = F, outname = outname, cores = 8) {
-  tID <- matched[[1]]$transcriptID
-  eiID <- matched[[1]]$input_id
+bedify <- function(matched = matched, num = c(1, 3)[1], saveBED = F, outname = outname, cores = 8) {
+  tID <- matched[[num]]$transcriptID
+  eiID <- matched[[num]]$input_id
   toBed <- list()
   toBed <- parallel::mclapply(1:length(tID), mc.cores = cores, function(i) {
     bed <- gtf[gtf$transcriptID == tID[i] & gtf$type == "exon",] %>% dplyr::select(chr, start, stop, transcriptID, geneID, strand)

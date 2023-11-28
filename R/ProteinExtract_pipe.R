@@ -40,7 +40,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
   matched <- getTranscript(gtf = gtf, redExon = redExon, ex_type = exon_type, minOverlap = mOverlap, swaps = !(background), cores = inCores)
   print("exons matched, bed-ifying...")
-  bed <- bedify(matched, saveBED=F, outname = outname, cores = inCores)
+  bed <- bedify(matched, num = 1, saveBED=F, outname = outname, cores = inCores)
 
 
   trans <- unlist(lapply(strsplit(unique(bed$name), "#"), "[[", 1))
@@ -138,11 +138,41 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
     proBed$matchType <- rep(alignType, each = 2)
 
+
+
+
+    bed_all <- bedify(matched, num = 3, saveBED=F, outname = outname, cores = inCores)
+    trans_all <- unlist(lapply(strsplit(unique(bed_all$name), "#"), "[[", 1))
+    possT_all <- unlist(lapply(strsplit(bed_all$name, "#"), "[[", 1))
+
+    ## Find annotated proteins for transcripts if possible
+    protCode_all <- unlist(mclapply(trans_all, mc.cores = 8, function(x) {
+      rc <- c_trans[which(c_trans == x)+1]
+      if (length(rc) > 0) {
+        rc[1]
+      } else {"none"}
+    }))
+
+    proBed_all <- data.frame(id = unique(bed_all$name), strand = unlist(lapply(unique(bed_all$name), function(x) unique(bed_all$strand[bed$name == x][1])[1])), prot = protCode_all) %>%
+      tidyr::separate(id, c("transcript", "id"), "#") %>%
+      tidyr::separate("id", c("gene", "chr"), ";") %>%
+      tidyr::separate('chr', c('chr', 'coords'), ':') %>%
+      tidyr::separate('coords', c('start', 'stop'), '-')
+
+    proFast_all <- c()
+    for (i in 1:length(proBed_all[,1])) {
+      proFast_all <- c(proFast_all, paste(">", proBed_all$transcript[i], "#", proBed_all$gene[i], ";", proBed_all$chr[i], ":", proBed_all$start[i], "-", proBed_all$stop[i], ";", proBed_all$strand[i], sep = ""),
+                       proBed_all$prot[i])
+    }
     if (saveOutput == T) {
-      write_csv(proBed, paste0(output_location, "fgoutBed.csv"))
-      write_lines(proFast, paste0(output_location, "fgoutFast.fa"))
-      write_csv(matched$out_matched,  paste0(output_location, "fgmatched.csv"))
-      write_csv(bed,  paste0(output_location, "fgbed.csv"))
+      write_csv(proBed_all, paste0(output_location, "fgoutBed.csv"))
+      write_lines(proFast_all, paste0(output_location, "fgoutFast.fa"))
+      write_csv(matched$tot_matched,  paste0(output_location, "fgmatched.csv"))
+      write_csv(bed_all,  paste0(output_location, "fgbed.csv"))
+      write_csv(proBed, paste0(output_location, "paired_fgoutBed.csv"))
+      write_lines(proFast, paste0(output_location, "paired_fgoutFast.fa"))
+      write_csv(matched$out_matched,  paste0(output_location, "paired_fgmatched.csv"))
+      write_csv(bed,  paste0(output_location, "paired_fgbed.csv"))
       write_csv(df.l,  paste0(output_location, "fglfc.csv"))
 
       pdf(file = paste0(output_location, "alignPlot.pdf"))
@@ -154,9 +184,12 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
       dev.off()
     }
     return(list(matched = matched,
-                bed = bed,
-                proBed = proBed,
-                proFast = proFast,
+                bed = all_bed,
+                proBed = all_proBed,
+                proFast = all_proFast
+                paired_bed = bed,
+                paired_proBed = proBed,
+                paired_proFast = proFast,
                 df.l = cdf.l,
                 gdf = gdf,
                 deExons = lfcPlot))
