@@ -11,5 +11,8 @@ get_c_trans <- function(location) {
 # output: gtf_withInfo.csv csv
 
 get_gtf <- function(location) {
-  return(read.csv(paste(location,"/gtf_withInfo.csv",sep=""), header = T)[,-c(1)])
+  cg <- do.call(rbind, lapply(paste0(location, paste0(c("first", paste0("internal", 1:5), "last"), "_gtf.csv")), function(x) {
+    read.csv(x, header = T)[,-c(1)]
+  }))
+  return(cg)
 }
