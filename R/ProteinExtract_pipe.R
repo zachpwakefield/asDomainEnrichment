@@ -64,11 +64,14 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     df <- read.delim(files_dir, sep = " ")
     df.l <- lfc(df, numCont = nC, numExp = nE, exon_type = exon_type, cores = inCores)
 
+    ## Filter df.l for paired analysis
+    bdf.l <- df.l[abs(df.l$delta_PSI) >= thresh & df.l$p_value <= fdr,]
+
     ## Make volcano plot with make_lfcPlot()
     lfcPlot <- make_lfcPlot(df.l)
 
 
-    ## Filter based on fdr and thresh inputs
+    ## Filter based on fdr and thresh inputs for all analysis
     if (updown == "up") {
       cdf.l <- df.l[df.l$delta_PSI >= thresh & df.l$p_value <= fdr,]
     } else {
@@ -85,10 +88,10 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     redExon_filt$start <- as.numeric(redExon_filt$start)
     redExon_filt$stop <- as.numeric(redExon_filt$stop)
 
-    redExon <- data.frame(geneR = unlist(lapply(strsplit(df.l$gene, split = "[.]"), "[[", 1)),
-                               chr = sapply(strsplit(df.l$exon, split = ":"), "[[", 1),
-                               start = sapply(strsplit(sapply(strsplit(df.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 1),
-                               stop = sapply(strsplit(sapply(strsplit(df.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 2)
+    redExon <- data.frame(geneR = unlist(lapply(strsplit(bdf.l$gene, split = "[.]"), "[[", 1)),
+                               chr = sapply(strsplit(bdf.l$exon, split = ":"), "[[", 1),
+                               start = sapply(strsplit(sapply(strsplit(bdf.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 1),
+                               stop = sapply(strsplit(sapply(strsplit(bdf.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 2)
     )
   }
 
