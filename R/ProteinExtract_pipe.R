@@ -96,7 +96,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
   ## Use bedify() to extract the total or matched (if background = F) bed file
   bed <- bedify(matched, num = 1, saveBED=F, outname = outname, cores = inCores)
-
+  print("done bed-ifying...")
 
   ## extract unqiue transcript names as trans and all trancript names as possT
   trans <- unlist(lapply(strsplit(unique(bed$name), "#"), "[[", 1))
@@ -111,6 +111,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     } else {"none"}
   }))
 
+  print("making paired output...")
   ## Make dataframe proBed for output of matched transcripts withprotein code
   proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1]))), prot = protCode) %>%
     tidyr::separate(id, c("transcript", "id"), "#") %>%
@@ -199,8 +200,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
     proBed$matchType <- rep(alignType, each = 2)
 
-
-
+    print("making all output...")
     ## Reproduce previous output but on entire differentially includeded foreground set, not just matched transcripts for domain enrichment analysis
     bed_all <- bedify(matched, num = 3, saveBED=F, outname = outname, cores = inCores)
     trans_all <- unlist(lapply(strsplit(unique(bed_all$name), "#"), "[[", 1))
