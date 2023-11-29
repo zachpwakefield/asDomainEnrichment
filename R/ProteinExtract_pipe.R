@@ -1,8 +1,48 @@
+# proteinExtract_pipe
+# inputs:
+### files_dir : either a list of hit exon output directories for background domain generation or a differential inclusion output file for foreground domains
+### background : T for generating background domains or F for generating foreground (differentially included) domains
+#                defauls to T
+### updown : whether looking at exons differentially included more (up) or less (down)
+#            defaults to up
+### thresh : delta psi threshold absolute value
+#            defaults to 0.4
+### fdr : false discovery rate to count as significant in differential inclusion of exons
+#         defaults to 0.05
+### mOverlap : proportion of overlap of exons to count as intersection
+#              defaults to 0.5
+### saveOutput : whether to write output or not
+#                defaults to F
+### inCores : number of cores for use
+#             defaults to 8
+### nC : number of control samples
+#        defaults to 0
+### nE : number of experimental samples
+#        defaults to 0
+### exon_type : AFE, ALE, or SE
+#               defaults to AFE
+### location : package location, defaults to system.file(package="domainEnrichment")
+### output_location : directory to write output
+
+# outputs:
+### matched : transcripts matched to input exons
+### bed : bed file format for exons of transcripts matched to input exons
+### proBed : file of transcripts matched to input exons with protein code
+### proFast : fasta file for proteins matched to input exons
+### paired_bed : bed file for exons of transcripts matched to input paired exons (background = F)
+### paired_proBed : bed file of transcripts matched to input exons (background = F)
+### paired_proFast : fasta file for proteins matched to input exons (background = F)
+### df.l : differential exon inclusion output with log2 fold change (background = F)
+### gdf : alignment plot (background = F)
+### deExons : volcano plot (background = F)
+
 proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'down')[1], thresh = .4, fdr = .05, mOverlap = .5,
                                 saveOutput = F, inCores = 8, nC = 0, nE = 0, exon_type = "AFE",
                                 location = system.file(package="domainEnrichment"), output_location) {
 
   if (background == T) {
+
+    ## If using background set, extract all first exons and create combined data.frame with gene, location
     files <- paste(files_dir, list.files(files_dir)[grep('[.]exon', list.files(files_dir))], sep = "")
     cat(files)
     first_exons <- unique(unlist(lapply(files, function(x) {
@@ -14,15 +54,28 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
                           start = unlist(lapply(strsplit(unlist(lapply(strsplit(unlist(lapply(strsplit(first_exons, split = ";"), "[[", 2)), split = '-'), "[[", 1)), split = ":"), "[[", 2)),
                           stop = unlist(lapply(strsplit(unlist(lapply(strsplit(first_exons, split = ";"), "[[", 2)), split = '-'), "[[", 2))
     )
+
+    ## Remove duplicate rows
+    redExon <- redExon[!duplicated(redExon),]
+
   } else {
+
+    ## If using foreground set, read in diExon file and extract differentially included exons using lfc()
     df <- read.delim(files_dir, sep = " ")
     df.l <- lfc(df, numCont = nC, numExp = nE, exon_type = exon_type, cores = inCores)
+
+    ## Make volcano plot with make_lfcPlot()
     lfcPlot <- make_lfcPlot(df.l)
+
+
+    ## Filter based on fdr and thresh inputs
     if (updown == "up") {
       cdf.l <- df.l[df.l$delta_PSI >= thresh & df.l$p_value <= fdr,]
     } else {
       cdf.l <- df.l[df.l$delta_PSI <= -(thresh) & df.l$p_value <= fdr,]
     }
+
+    ## Make data.frame with gene, location of each exon
     redExon <- data.frame(geneR = unlist(lapply(strsplit(cdf.l$gene, split = "[.]"), "[[", 1)),
                           chr = sapply(strsplit(cdf.l$exon, split = ":"), "[[", 1),
                           start = sapply(strsplit(sapply(strsplit(cdf.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 1),
@@ -31,18 +84,21 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
   }
 
-
+  ## Standardize redExon column names and column types
   colnames(redExon) <- c("geneR", "chr", "start", "stop")
   redExon$start <- as.numeric(redExon$start)
   redExon$stop <- as.numeric(redExon$stop)
   print("exon loaded...")
 
-
+  ## Use getTranscript() to extract total and (if background = F) paired transcripts matched to input exons
   matched <- getTranscript(gtf = gtf, redExon = redExon, ex_type = exon_type, minOverlap = mOverlap, swaps = !(background), cores = inCores)
   print("exons matched, bed-ifying...")
+
+  ## Use bedify() to extract the total or matched (if background = F) bed file
   bed <- bedify(matched, num = 1, saveBED=F, outname = outname, cores = inCores)
 
 
+  ## extract unqiue transcript names as trans and all trancript names as possT
   trans <- unlist(lapply(strsplit(unique(bed$name), "#"), "[[", 1))
   possT <- unlist(lapply(strsplit(bed$name, "#"), "[[", 1))
 
@@ -55,12 +111,14 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     } else {"none"}
   }))
 
+  ## Make dataframe proBed for output of matched transcripts withprotein code
   proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1])[1])), prot = protCode) %>%
     tidyr::separate(id, c("transcript", "id"), "#") %>%
     tidyr::separate("id", c("gene", "chr"), ";") %>%
     tidyr::separate('chr', c('chr', 'coords'), ':') %>%
     tidyr::separate('coords', c('start', 'stop'), '-')
 
+  ## Make fasta file with id & strand in first line and protein code
   proFast <- c()
   for (i in 1:length(proBed[,1])) {
     proFast <- c(proFast, paste(">", proBed$transcript[i], "#", proBed$gene[i], ";", proBed$chr[i], ":", proBed$start[i], "-", proBed$stop[i], ";", proBed$strand[i], sep = ""),
@@ -80,6 +138,9 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
                 proBed = proBed,
                 proFast = proFast))
   } else {
+
+    ## In paired bed file, mark each pair as either onePC, nonPC, PC and as either Match, Different, Frameshift, or Partial Match
+    ## Possible output of aligned protein sequence pdf
     protAlign <- list()
     protC <- c()
     pMatch <- c()
@@ -124,12 +185,12 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
         }
       }
     }
-
     print(table(protC))
     proBed$match <- protC
     proBed$prop <- rep(pMatch, each = 2)
 
-    # Filled Density Plot
+
+    # Alignment plot showing distribution of different type of exon swapping
     (gdf <- ggplot2::ggplot(data.frame(dens = as.numeric(pMatch), type = alignType), ggplot2::aes(x = dens, fill = type)) +
         ggplot2::geom_histogram(ggplot2::aes(y=ggplot2::after_stat(count)/sum(ggplot2::after_stat(count))), colour = 1,
                                 bins = 20) + ggplot2::geom_density(ggplot2::aes(y=.0005*ggplot2::after_stat(count)), color = 'black', fill = "coral2", bw = .1, alpha = .3) +
@@ -140,7 +201,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
 
 
-
+    ## Reproduce previous output but on entire differentially includeded foreground set, not just matched transcripts for domain enrichment analysis
     bed_all <- bedify(matched, num = 3, saveBED=F, outname = outname, cores = inCores)
     trans_all <- unlist(lapply(strsplit(unique(bed_all$name), "#"), "[[", 1))
     possT_all <- unlist(lapply(strsplit(bed_all$name, "#"), "[[", 1))
@@ -153,12 +214,14 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
       } else {"none"}
     }))
 
+    ## Make dataframe proBed for output of matched transcripts withprotein code
     proBed_all <- data.frame(id = unique(bed_all$name), strand = unlist(lapply(unique(bed_all$name), function(x) unique(bed_all$strand[bed$name == x][1])[1])), prot = protCode_all) %>%
       tidyr::separate(id, c("transcript", "id"), "#") %>%
       tidyr::separate("id", c("gene", "chr"), ";") %>%
       tidyr::separate('chr', c('chr', 'coords'), ':') %>%
       tidyr::separate('coords', c('start', 'stop'), '-')
 
+    ## Make fasta file with id & strand in first line and protein code
     proFast_all <- c()
     for (i in 1:length(proBed_all[,1])) {
       proFast_all <- c(proFast_all, paste(">", proBed_all$transcript[i], "#", proBed_all$gene[i], ";", proBed_all$chr[i], ":", proBed_all$start[i], "-", proBed_all$stop[i], ";", proBed_all$strand[i], sep = ""),
