@@ -76,12 +76,20 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     }
 
     ## Make data.frame with gene, location of each exon
-    redExon <- data.frame(geneR = unlist(lapply(strsplit(cdf.l$gene, split = "[.]"), "[[", 1)),
+    redExon_filt <- data.frame(geneR = unlist(lapply(strsplit(cdf.l$gene, split = "[.]"), "[[", 1)),
                           chr = sapply(strsplit(cdf.l$exon, split = ":"), "[[", 1),
                           start = sapply(strsplit(sapply(strsplit(cdf.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 1),
                           stop = sapply(strsplit(sapply(strsplit(cdf.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 2)
     )
+    colnames(redExon_filt) <- c("geneR", "chr", "start", "stop")
+    redExon_filt$start <- as.numeric(redExon_filt$start)
+    redExon_filt$stop <- as.numeric(redExon_filt$stop)
 
+    redExon <- data.frame(geneR = unlist(lapply(strsplit(df.l$gene, split = "[.]"), "[[", 1)),
+                               chr = sapply(strsplit(df.l$exon, split = ":"), "[[", 1),
+                               start = sapply(strsplit(sapply(strsplit(df.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 1),
+                               stop = sapply(strsplit(sapply(strsplit(df.l$exon, split = ":"), "[[", 2), split = "[-]"), "[[", 2)
+    )
   }
 
   ## Standardize redExon column names and column types
@@ -202,7 +210,8 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
     print("making all output...")
     ## Reproduce previous output but on entire differentially includeded foreground set, not just matched transcripts for domain enrichment analysis
-    bed_all <- bedify(matched, num = 3, saveBED=F, outname = outname, cores = inCores)
+    matched_all <- getTranscript(gtf = gtf, redExon = redExon_filt, ex_type = exon_type, minOverlap = mOverlap, swaps = !(background), cores = inCores)
+    bed_all <- bedify(matched_all, num = 3, saveBED=F, outname = outname, cores = inCores)
     trans_all <- unlist(lapply(strsplit(unique(bed_all$name), "#"), "[[", 1))
     possT_all <- unlist(lapply(strsplit(bed_all$name, "#"), "[[", 1))
 
@@ -234,7 +243,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
       write_csv(bed_all,  paste0(output_location, "fgbed.csv"))
       write_csv(proBed, paste0(output_location, "paired_fgoutBed.csv"))
       write_lines(proFast, paste0(output_location, "paired_fgoutFast.fa"))
-      write_csv(matched$out_matched,  paste0(output_location, "paired_fgmatched.csv"))
+      write_csv(matched_all$out_matched,  paste0(output_location, "paired_fgmatched.csv"))
       write_csv(bed,  paste0(output_location, "paired_fgbed.csv"))
       write_csv(df.l,  paste0(output_location, "fglfc.csv"))
 
