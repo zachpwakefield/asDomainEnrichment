@@ -1,8 +1,8 @@
 getData <- function(cuD) {
   tf <- list.files(cuD)
   ipscan <- tf[grep("fa.tsv", tf)]
-  outFast <- tf[(!(grepl(".tsv", tf)) & !(grepl("xml", tf)) & !(grepl("gff3", tf)) & !(grepl("json", tf)) & grepl("outFast.fa", tf))]
-  outBed <- tf[grep("outBed.csv", tf)]
+  outFast <- tf[(!(grepl(".tsv", tf)) & !(grepl("xml", tf)) & !(grepl("gff3", tf)) & !(grepl("json", tf)) & grepl("outFast.fa", tf) & !grepl("paired", tf))]
+  outBed <- tf[grepl("outBed.csv", tf) & !grepl("paired", tf)]
   interproscan_results <- lapply(c("bg", "fg"), function(o) {
     ip <- readr::read_delim(paste(cuD, ipscan[grep(o, ipscan)], sep = ""), col_names = F, delim = '\t')
     s <- readr::read_csv(paste(cuD, outBed[grep(o, outBed)], sep =""))
@@ -14,9 +14,8 @@ getData <- function(cuD) {
     ips <- ip %>% dplyr::filter(X4 %in% c("Pfam", "ProSitePatterns", "CDD", "PANTHER"))
     table(ips$X13)
     protInf <- list()
-    upS <- seq(from=1,to=(length(gN)), by=1)
-    for (j in upS) {
-      protInf[[j]] <- ips$X13[ips$X1 == gN[j]]
+    for (j in 1:length(gN)) {
+      protInf[[j]] <- ips$X6[ips$X1 == gN[j]]
       protInf[[j]] <- paste(protInf[[j]], collapse = ';')
     }
     protInf.o <- unlist(protInf)
