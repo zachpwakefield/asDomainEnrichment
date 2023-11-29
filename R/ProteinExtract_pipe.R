@@ -112,7 +112,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
   }))
 
   ## Make dataframe proBed for output of matched transcripts withprotein code
-  proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1])[1])), prot = protCode) %>%
+  proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1]))), prot = protCode) %>%
     tidyr::separate(id, c("transcript", "id"), "#") %>%
     tidyr::separate("id", c("gene", "chr"), ";") %>%
     tidyr::separate('chr', c('chr', 'coords'), ':') %>%
@@ -215,7 +215,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     }))
 
     ## Make dataframe proBed for output of matched transcripts withprotein code
-    proBed_all <- data.frame(id = unique(bed_all$name), strand = unlist(lapply(unique(bed_all$name), function(x) unique(bed_all$strand[bed$name == x][1])[1])), prot = protCode_all) %>%
+    proBed_all <- data.frame(id = unique(bed_all$name), strand = unlist(lapply(unique(bed_all$name), function(x) unique(bed_all$strand[bed_all$name == x][1])[1])), prot = protCode_all) %>%
       tidyr::separate(id, c("transcript", "id"), "#") %>%
       tidyr::separate("id", c("gene", "chr"), ";") %>%
       tidyr::separate('chr', c('chr', 'coords'), ':') %>%
