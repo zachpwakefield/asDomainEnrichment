@@ -106,6 +106,8 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
   print("exons matched, bed-ifying...")
 
   ## Use bedify() to extract the total or matched (if background = F) bed file
+  ## num = 1 is paired in foreground, and total in background
+
   bed <- bedify(matched, num = 1, saveBED=F, outname = outname, cores = inCores)
   print("done bed-ifying...")
 
@@ -122,7 +124,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     } else {"none"}
   }))
 
-  print("making paired output...")
+  if (background) {print("making background output...")} else {print("making paired output...")}
   ## Make dataframe proBed for output of matched transcripts withprotein code
   proBed <- data.frame(id = unique(bed$name), strand = unlist(lapply(unique(bed$name), function(x) unique(bed$strand[bed$name == x][1]))), prot = protCode) %>%
     tidyr::separate(id, c("transcript", "id"), "#") %>%
@@ -265,7 +267,9 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
                 paired_bed = bed,
                 paired_proBed = proBed,
                 paired_proFast = proFast,
-                df.l = cdf.l,
+                df.l = df.l,
+                bdf.l = bdf.l,
+                cdf.l = cdf.l,
                 gdf = gdf,
                 deExons = lfcPlot))
   }
