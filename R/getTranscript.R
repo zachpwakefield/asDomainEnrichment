@@ -72,7 +72,7 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
   rowOuts <- unlist(lapply(rc_out, "[[", 1))
   checks <- unlist(lapply(rc_out, "[[", 2))
   ## Remove erroneous matches
-  out_matched <- do.call(rbind, parallel::mclapply(unlist(rowOuts)[unlist(rowOuts) != 0], mc.cores = inCores, function(x) gtf[gtf$rownum == x, ]))
+  out_matched <- do.call(rbind, parallel::mclapply(unlist(rowOuts)[unlist(rowOuts) != 0], mc.cores = cores, function(x) gtf[gtf$rownum == x, ]))
   ## Data arrangement
   out_matched$input_id <- paste(redExon$geneR, ";", redExon$chr, ":", redExon$start, "-", redExon$stop, sep = "")[unlist(rowOuts) != 0]
   out_matched <- out_matched %>% dplyr::relocate(input_id)
