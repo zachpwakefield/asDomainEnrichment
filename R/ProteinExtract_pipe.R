@@ -117,7 +117,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
 
 
   ## Find annotated proteins for transcripts if possible
-  protCode <- unlist(mclapply(trans, mc.cores = 8, function(x) {
+  protCode <- unlist(parallel::mclapply(trans, mc.cores = 8, function(x) {
     rc <- c_trans[which(c_trans == x)+1]
     if (length(rc) > 0) {
       rc[1]
