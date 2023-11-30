@@ -11,7 +11,7 @@ get_c_trans <- function(location) {
 # output: cg csv
 
 get_gtf <- function(location) {
-  cg <- do.call(rbind, lapply(paste0(location, paste0(c("/first", paste0("/internal", 1:5), "/last"), "_gtf.csv")), function(x) {
+  cg <- do.call(rbind, lapply(paste0(location, paste0(c("/gene", "/transcript", "/single_exon", "/first", paste0("/internal", 1:5), "/last"), "_gtf.csv")), function(x) {
     read.csv(x, header = T)
   }))
   return(cg)
