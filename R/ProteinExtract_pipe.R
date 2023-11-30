@@ -204,7 +204,7 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     proBed$prop <- rep(pMatch, each = 2)
 
     gdf_df <- data.frame(dens = as.numeric(pMatch), type = alignType)
-    gdf_df2 <- gdf_df[gdf_df$type != "noPC"]
+    gdf_df2 <- gdf_df[gdf_df$type != "noPC",]
     # Alignment plot showing distribution of different type of exon swapping
     (gdf <- ggplot2::ggplot(gdf_df, ggplot2::aes(x = dens, fill = type)) +
         ggplot2::geom_histogram(ggplot2::aes(y=ggplot2::after_stat(count)/sum(ggplot2::after_stat(count))), colour = 1,
