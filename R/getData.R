@@ -1,9 +1,12 @@
 getData2 <- function(cuD, engine = c("FunFam","Gene3D","CDD","PANTHER","SMART","ProSiteProfiles","Pfam","SUPERFAMILY","MobiDBLite","Coils","PRINTS","ProSitePatterns","PIRSF","NCBIfam","Hamap")[7]) {
-  cuD <- output_location
+
+  ## extract bed, fasta, and interproscan files from output_location
   tf <- list.files(cuD)
   ipscan <- tf[grep("fa.tsv", tf)]
   outFast <- tf[(!(grepl(".tsv", tf)) & !(grepl("xml", tf)) & !(grepl("gff3", tf)) & !(grepl("json", tf)) & grepl("outFast.fa", tf) & !grepl("paired", tf))]
   outBed <- tf[grepl("outBed.csv", tf) & !grepl("paired", tf)]
+
+  ## collate interproscan results
   interproscan_results <- lapply(c("bg", "fg"), function(o) {
     ip <- readr::read_delim(paste(cuD, ipscan[grep(o, ipscan)], sep = ""), col_names = F, delim = '\t')
     s <- readr::read_csv(paste(cuD, outBed[grep(o, outBed)], sep =""))
@@ -12,6 +15,8 @@ getData2 <- function(cuD, engine = c("FunFam","Gene3D","CDD","PANTHER","SMART","
     nFa <- fa[grep(">", fa)]
     gN <- gsub(">", "", nFa)
     geneL <- unlist(lapply(strsplit(unlist(lapply(strsplit(fa[grep(">", fa)], split = ";"), "[[", 1)), split = "#"), "[[", 2))
+
+    ## filter by whichever domain identifying engine(s) selected
     ips <- ip %>% dplyr::filter(X4 %in% engine)
     protInf <- list()
     for (j in 1:length(gN)) {
@@ -34,14 +39,17 @@ getData2 <- function(cuD, engine = c("FunFam","Gene3D","CDD","PANTHER","SMART","
   pop_size <- length(bg_dom)
   sample_size <- length(searcher)
 
+  ## compute hypergeometric test
   pvals <- suppressWarnings(signif(stats::phyper(sapply(successes, "[[", 1)-1,
                                                  sapply(successes, "[[", 2),
                                                  pop_size-sapply(successes, "[[", 2),
                                                  sample_size, lower.tail=FALSE), 5))
 
 
+  ## multiple hypothesis correction, fdr
   pvals.adj <- signif(stats::p.adjust(pvals, method="fdr"), 5)
 
+  ## output
   data <- data.frame(domain = searcher,
                      pval = pvals,
                      fdr = pvals.adj,
