@@ -1,4 +1,5 @@
-getData <- function(cuD) {
+getData2 <- function(cuD, engine = c("FunFam","Gene3D","CDD","PANTHER","SMART","ProSiteProfiles","Pfam","SUPERFAMILY","MobiDBLite","Coils","PRINTS","ProSitePatterns","PIRSF","NCBIfam","Hamap")[7]) {
+  cuD <- output_location
   tf <- list.files(cuD)
   ipscan <- tf[grep("fa.tsv", tf)]
   outFast <- tf[(!(grepl(".tsv", tf)) & !(grepl("xml", tf)) & !(grepl("gff3", tf)) & !(grepl("json", tf)) & grepl("outFast.fa", tf) & !grepl("paired", tf))]
@@ -11,8 +12,7 @@ getData <- function(cuD) {
     nFa <- fa[grep(">", fa)]
     gN <- gsub(">", "", nFa)
     geneL <- unlist(lapply(strsplit(unlist(lapply(strsplit(fa[grep(">", fa)], split = ";"), "[[", 1)), split = "#"), "[[", 2))
-    ips <- ip %>% dplyr::filter(X4 %in% c("Pfam", "ProSitePatterns", "CDD", "PANTHER"))
-    table(ips$X13)
+    ips <- ip %>% dplyr::filter(X4 %in% engine)
     protInf <- list()
     for (j in 1:length(gN)) {
       protInf[[j]] <- ips$X6[ips$X1 == gN[j]]
@@ -27,37 +27,37 @@ getData <- function(cuD) {
 
   bg_dom <- unlist(strsplit(interproscan_results[[1]]$protInfor, split = ';'))
   fg_dom <- unlist(strsplit(interproscan_results[[2]]$protInfor, split = ';'))
-  search <- unique(fg_dom)
+  fg_dom_li <- lapply(strsplit(interproscan_results[[2]]$protInfor, split = ';'), unique)
+  searcher <- unique(fg_dom)
 
-  successes <- lapply(search, function(x) c(sum(fg_dom == x), sum(bg_dom == x)))
+  successes <- lapply(searcher, function(x) c(sum(fg_dom == x), sum(bg_dom == x)))
   pop_size <- length(bg_dom)
-  sample_size <- length(search)
+  sample_size <- length(searcher)
 
   pvals <- suppressWarnings(signif(stats::phyper(sapply(successes, "[[", 1)-1,
                                                  sapply(successes, "[[", 2),
                                                  pop_size-sapply(successes, "[[", 2),
-                                                 sample_size, lower.tail=FALSE), 3))
+                                                 sample_size, lower.tail=FALSE), 5))
 
 
-  pvals.adj <- signif(stats::p.adjust(pvals, method="fdr"), 3)
+  pvals.adj <- signif(stats::p.adjust(pvals, method="fdr"), 5)
 
-  data <- data.frame(domain = search,
+  data <- data.frame(domain = searcher,
                      pval = pvals,
                      fdr = pvals.adj,
-                     sample_size = length(fg_dom),
+                     sample_size = rep(length(fg_dom), length(pvals)),
                      sample_successes = sapply(successes, "[[", 1),
                      sample_prop = sapply(successes, "[[", 1) / length(fg_dom),
 
-                     pop_size = length(bg_dom),
+                     pop_size = rep(length(bg_dom), length(pvals)),
                      pop_successes = sapply(successes, "[[", 2),
                      pop_prop = sapply(successes, "[[", 2) / length(bg_dom),
-                     protein_contain = unlist(lapply(search, function(x) paste(interproscan_results[[2]]$exon[grep(x, interproscan_results[[2]]$protInfor)], collapse = "%")))
+                     protein_contain = unlist(lapply(searcher, function(y) {paste(unique(interproscan_results[[2]]$exon[which(unlist(lapply(fg_dom_li, function(uu) {y %in% uu})))]), collapse = "%")}))
 
   )
 
 
   data$rel_prop <- (data$sample_prop + .01) / (data$pop_prop + .01)
-  data <- data[data$domain != "none" & data$domain != "" & data$domain != "-",] %>% dplyr::arrange(dplyr::desc(rel_prop))
-  write.csv(data, paste0(cuD, 'domainEnrichment.csv'))
+  data <- data[data$domain != "none" & data$domain != "" & data$domain != "-",] %>% dplyr::arrange(fdr)
   return(data)
 }
