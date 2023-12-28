@@ -45,9 +45,16 @@ proteinExtract_pipe <- function(files_dir, background = T, updown = c('up', 'dow
     ## If using background set, extract all first exons and create combined data.frame with gene, location
     files <- paste(files_dir, list.files(files_dir)[grep('[.]exon', list.files(files_dir))], sep = "")
     cat(files)
+    if (exon_type == "AFE") {
+      lim <- c("first")
+    } else if (exon_type == "ALE") {
+      lim <- c("last")
+    } else if (exon_type == "SE") {
+      lim <- c("internal")
+    }
     first_exons <- unique(unlist(lapply(files, function(x) {
       in_file <- read.delim(x)
-      in_file <- in_file[in_file$ID == 'first',]
+      in_file <- in_file[in_file$ID == lim,]
       paste(in_file$gene, ';', in_file$exon, ';',  in_file$strand, sep = "")})))
     redExon <- data.frame(geneR = unlist(lapply(strsplit(unlist(lapply(strsplit(first_exons, split = ";"), "[[", 1)), split = '[.]'), "[[", 1)),
                           chr = unlist(lapply(strsplit(unlist(lapply(strsplit(unlist(lapply(strsplit(first_exons, split = ";"), "[[", 2)), split = '-'), "[[", 1)), split = ":"), "[[", 1)),

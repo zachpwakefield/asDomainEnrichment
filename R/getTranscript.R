@@ -15,9 +15,9 @@ getTranscript <- function(gtf = gtf, redExon = redExon, ex_type = exon_type, min
     ## Reduce gtf for faster computation
 
     if (ex_type == "AFE") {
-      lim <- c("first", "single_exon")
+      lim <- c("first")
     } else if (ex_type == "ALE") {
-      lim <- c("last", "single_exon")
+      lim <- c("last")
     } else if (ex_type == "SE") {
       lim <- c("internal")
     }
